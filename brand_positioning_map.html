@@ -801,6 +801,9 @@
 
             // Enable drag functionality for logos
             enableLogoDragging(xAttrId, yAttrId);
+
+            // Add hover labels
+            addHoverLabels(xAttrId, yAttrId);
         }
 
         // Global drag state to persist across chart updates
@@ -986,6 +989,62 @@
             Plotly.relayout('plot', {
                 images: images,
                 annotations: annotations
+            });
+        }
+
+        // Add hover labels to show brand names
+        function addHoverLabels(xAttrId, yAttrId) {
+            const plotDiv = document.getElementById('plot');
+            const hoverLabel = document.createElement('div');
+            hoverLabel.id = 'hover-label';
+            hoverLabel.style.cssText = `
+                position: absolute;
+                background: rgba(0, 0, 0, 0.85);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+                pointer-events: none;
+                display: none;
+                z-index: 10000;
+                white-space: nowrap;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(hoverLabel);
+
+            plotDiv.addEventListener('mousemove', function(e) {
+                if (!plotDiv._fullLayout) return;
+
+                const xaxis = plotDiv._fullLayout.xaxis;
+                const yaxis = plotDiv._fullLayout.yaxis;
+                const plotBounds = plotDiv.getBoundingClientRect();
+
+                const px = e.clientX - plotBounds.left;
+                const py = e.clientY - plotBounds.top;
+                const dataX = xaxis.p2d(px);
+                const dataY = yaxis.p2d(py);
+
+                // Find brand near cursor
+                const hoveredBrand = data.brands.find(b => {
+                    if (!b.scores || !b.logo) return false;
+                    const dx = Math.abs((b.scores[xAttrId] || 50) - dataX);
+                    const dy = Math.abs((b.scores[yAttrId] || 50) - dataY);
+                    return dx < 8 && dy < 8;
+                });
+
+                if (hoveredBrand) {
+                    hoverLabel.textContent = hoveredBrand.name;
+                    hoverLabel.style.display = 'block';
+                    hoverLabel.style.left = (e.clientX + 15) + 'px';
+                    hoverLabel.style.top = (e.clientY - 30) + 'px';
+                } else {
+                    hoverLabel.style.display = 'none';
+                }
+            });
+
+            plotDiv.addEventListener('mouseleave', function() {
+                hoverLabel.style.display = 'none';
             });
         }
 
