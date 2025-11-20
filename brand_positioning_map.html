@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Brand Positioning Map - Interactive</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        h1, h2 {
+            margin-top: 0;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .help-icon {
+            cursor: pointer;
+            font-size: 20px;
+            color: #007bff;
+            background: #e7f3ff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .help-icon:hover {
+            background: #cce5ff;
+        }
+        h2 {
+            font-size: 18px;
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #bd2130;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        label {
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-top: 10px;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+        }
+        .item-list li {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .item-list li:hover {
+            background: #e9ecef;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .item-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .logo-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        .brand-info {
+            display: flex;
+            align-items: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .close:hover {
+            color: #333;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .slider-value {
+            color: #007bff;
+            font-weight: 600;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .axis-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .axis-control {
+            flex: 1;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+        .import-export {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #333;
+        }
+        .dragging {
+            cursor: move;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>
+                <span>Brand Positioning Map</span>
+                <span class="help-icon" onclick="openHelpModal()" title="Help & Instructions">?</span>
+            </h1>
+
+            <div class="section">
+                <h2>Brands</h2>
+                <button class="btn" onclick="openAddBrandModal()">+ Add Brand</button>
+                <ul class="item-list" id="brandList"></ul>
+            </div>
+
+            <div class="section">
+                <h2>Attributes</h2>
+                <button class="btn" onclick="openAddAttributeModal()">+ Add Attribute</button>
+                <ul class="item-list" id="attributeList"></ul>
+            </div>
+
+            <div class="import-export">
+                <h2>Data Management</h2>
+                <button class="btn btn-success" onclick="exportData()">Export JSON</button>
+                <button class="btn btn-success" onclick="exportCSVTemplate()">Export CSV Template</button>
+                <button class="btn btn-success" onclick="exportPDF()">Export as PNG</button>
+                <button class="btn" onclick="importData()">Import JSON</button>
+                <button class="btn" onclick="importCSV()">Import CSV</button>
+                <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
+                <input type="file" id="importCSVFile" style="display:none" accept=".csv" onchange="handleCSVImport(event)">
+                <button class="btn btn-danger" onclick="clearAllData()">Clear All</button>
+
+                <div class="info-box">
+                    <strong>Tip:</strong> Drag logos on the map to reposition brands! Changes are saved automatically.
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
+                    <a href="https://harrisonhensley.com" target="_blank" style="color: #999; text-decoration: none; font-size: 13px;">harrisonhensley.com</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="axis-controls">
+                <div class="axis-control">
+                    <label>X Axis:</label>
+                    <select id="xAxisSelect" onchange="updateChart()"></select>
+                </div>
+                <div class="axis-control">
+                    <label>Y Axis:</label>
+                    <select id="yAxisSelect" onchange="updateChart()"></select>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Brand Modal -->
+    <div id="brandModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="brandModalTitle">Add Brand</h2>
+                <span class="close" onclick="closeBrandModal()">&times;</span>
+            </div>
+            <form id="brandForm" onsubmit="saveBrand(event)">
+                <input type="hidden" id="brandId">
+
+                <label>Brand Name:</label>
+                <input type="text" id="brandName" required>
+
+                <label>Brand Logo:</label>
+                <input type="file" id="brandLogo" accept="image/*" onchange="previewLogo(event)">
+                <img id="logoPreview" style="max-width: 200px; margin: 10px 0; display: none;">
+
+                <div id="brandScores"></div>
+
+                <button type="submit" class="btn btn-success">Save Brand</button>
+                <button type="button" class="btn" onclick="closeBrandModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Attribute Modal -->
+    <div id="attributeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="attributeModalTitle">Add Attribute</h2>
+                <span class="close" onclick="closeAttributeModal()">&times;</span>
+            </div>
+            <form id="attributeForm" onsubmit="saveAttribute(event)">
+                <input type="hidden" id="attributeId">
+
+                <label>Attribute Name:</label>
+                <input type="text" id="attributeName" required placeholder="e.g., Price Point">
+
+                <label>Low Label:</label>
+                <input type="text" id="attributeLowLabel" required placeholder="e.g., Affordable">
+
+                <label>High Label:</label>
+                <input type="text" id="attributeHighLabel" required placeholder="e.g., Premium">
+
+                <button type="submit" class="btn btn-success">Save Attribute</button>
+                <button type="button" class="btn" onclick="closeAttributeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help/Instructions Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Use Brand Positioning Map</h2>
+                <span class="close" onclick="closeHelpModal()">&times;</span>
+            </div>
+
+            <div style="line-height: 1.6;">
+                <h3 style="color: #007bff; margin-top: 0;">Getting Started</h3>
+                <ol>
+                    <li><strong>Create Attributes First</strong> - Click "+ Add Attribute" to define what you want to measure (e.g., Price, Quality, Innovation)</li>
+                    <li><strong>Add Brands</strong> - Click "+ Add Brand" to add companies with logos and scores</li>
+                    <li><strong>View the Map</strong> - Select X and Y axes to visualize brand positioning</li>
+                </ol>
+
+                <h3 style="color: #007bff;">Three Ways to Score Brands</h3>
+                <ul>
+                    <li><strong>Sliders:</strong> Drag to set scores (0-100) when editing a brand</li>
+                    <li><strong>Manual Input:</strong> Type exact values in the number field</li>
+                    <li><strong>Drag on Map:</strong> Click and drag logos directly on the positioning map</li>
+                </ul>
+
+                <h3 style="color: #007bff;">Importing & Exporting Data</h3>
+
+                <h4>CSV Template (For Bulk Data Entry)</h4>
+                <ol>
+                    <li>Add your attributes in the app first</li>
+                    <li>Click "Export CSV Template"</li>
+                    <li>Open in Excel/Google Sheets and fill in brand names and scores</li>
+                    <li>Save as CSV and click "Import CSV"</li>
+                    <li>Upload logos for each brand using the "Edit" button</li>
+                </ol>
+
+                <h4>JSON Export/Import (Full Backup)</h4>
+                <ul>
+                    <li><strong>Export JSON:</strong> Save everything (brands, logos, attributes, scores)</li>
+                    <li><strong>Import JSON:</strong> Restore a complete backup</li>
+                </ul>
+
+                <h3 style="color: #007bff;">Tips</h3>
+                <ul>
+                    <li>Data auto-saves to your browser (localStorage)</li>
+                    <li>Logos are embedded - no external files needed</li>
+                    <li>Click a logo on the map to quick-edit that brand</li>
+                    <li>Use CSV for initial bulk data, then fine-tune with sliders or dragging</li>
+                    <li>Export JSON regularly to backup your work</li>
+                </ul>
+
+                <h3 style="color: #007bff;">CSV Template Format</h3>
+                <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">Brand Name,Logo Path,Attribute1,Attribute2,...
+"Nike","logo.png",85,75
+"Adidas","logo2.png",80,70</pre>
+                <p style="font-size: 13px; color: #666;"><em>Note: Logo Path column is a placeholder - upload actual logos through the UI</em></p>
+
+                <button class="btn" onclick="closeHelpModal()" style="margin-top: 20px;">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let data = {
+            brands: [],
+            attributes: []
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const stored = localStorage.getItem('brandPositioningData');
+            if (stored) {
+                data = JSON.parse(stored);
+            }
+            updateUI();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('brandPositioningData', JSON.stringify(data));
+        }
+
+        // Update all UI elements
+        function updateUI() {
+            updateBrandList();
+            updateAttributeList();
+            updateAxisSelects();
+            updateChart();
+        }
+
+        // Brand management
+        function openAddBrandModal() {
+            document.getElementById('brandModalTitle').textContent = 'Add Brand';
+            document.getElementById('brandForm').reset();
+            document.getElementById('brandId').value = '';
+            document.getElementById('logoPreview').style.display = 'none';
+            renderBrandScores();
+            document.getElementById('brandModal').style.display = 'block';
+        }
+
+        function openEditBrandModal(brandId) {
+            const brand = data.brands.find(b => b.id === brandId);
+            if (!brand) return;
+
+            document.getElementById('brandModalTitle').textContent = 'Edit Brand';
+            document.getElementById('brandId').value = brand.id;
+            document.getElementById('brandName').value = brand.name;
+
+            if (brand.logo) {
+                document.getElementById('logoPreview').src = brand.logo;
+                document.getElementById('logoPreview').style.display = 'block';
+            } else {
+                document.getElementById('logoPreview').style.display = 'none';
+            }
+
+            renderBrandScores(brand);
+            document.getElementById('brandModal').style.display = 'block';
+        }
+
+        function closeBrandModal() {
+            document.getElementById('brandModal').style.display = 'none';
+        }
+
+        function previewLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoPreview').src = e.target.result;
+                    document.getElementById('logoPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderBrandScores(brand = null) {
+            const container = document.getElementById('brandScores');
+            container.innerHTML = '<h3 style="margin-top: 20px;">Attribute Scores</h3>';
+
+            if (data.attributes.length === 0) {
+                container.innerHTML += '<p style="color: #999; font-style: italic;">Add attributes first to set scores.</p>';
+                return;
+            }
+
+            data.attributes.forEach(attr => {
+                const score = brand && brand.scores ? (brand.scores[attr.id] || 50) : 50;
+
+                container.innerHTML += `
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span><strong>${attr.name}</strong></span>
+                            <span class="slider-value" id="score-display-${attr.id}">${score}</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="${score}"
+                               id="score-slider-${attr.id}"
+                               oninput="updateScoreDisplay('${attr.id}', this.value)">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                            <span>${attr.lowLabel}</span>
+                            <span>${attr.highLabel}</span>
+                        </div>
+                        <input type="number" min="0" max="100" value="${score}"
+                               id="score-input-${attr.id}"
+                               style="margin-top: 5px; width: 80px;"
+                               oninput="updateScoreFromInput('${attr.id}', this.value)">
+                    </div>
+                `;
+            });
+        }
+
+        function updateScoreDisplay(attrId, value) {
+            document.getElementById(`score-display-${attrId}`).textContent = value;
+            document.getElementById(`score-input-${attrId}`).value = value;
+        }
+
+        function updateScoreFromInput(attrId, value) {
+            const clamped = Math.max(0, Math.min(100, parseInt(value) || 0));
+            document.getElementById(`score-slider-${attrId}`).value = clamped;
+            document.getElementById(`score-display-${attrId}`).textContent = clamped;
+            document.getElementById(`score-input-${attrId}`).value = clamped;
+        }
+
+        function saveBrand(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('brandId').value || Date.now().toString();
+            const name = document.getElementById('brandName').value;
+            const logoPreview = document.getElementById('logoPreview');
+            const logo = logoPreview.style.display !== 'none' ? logoPreview.src : null;
+
+            const scores = {};
+            data.attributes.forEach(attr => {
+                const slider = document.getElementById(`score-slider-${attr.id}`);
+                if (slider) {
+                    scores[attr.id] = parseInt(slider.value);
+                }
+            });
+
+            const existingIndex = data.brands.findIndex(b => b.id === id);
+            const brand = { id, name, logo, scores };
+
+            if (existingIndex >= 0) {
+                data.brands[existingIndex] = brand;
+            } else {
+                data.brands.push(brand);
+            }
+
+            saveData();
+            updateUI();
+            closeBrandModal();
+        }
+
+        function deleteBrand(brandId) {
+            if (confirm('Are you sure you want to delete this brand?')) {
+                data.brands = data.brands.filter(b => b.id !== brandId);
+                saveData();
+                updateUI();
+            }
+        }
+
+        function updateBrandList() {
+            const list = document.getElementById('brandList');
+            if (data.brands.length === 0) {
+                list.innerHTML = '<div class="empty-state">No brands yet. Add one to get started!</div>';
+                return;
+            }
+
+            list.innerHTML = data.brands.map(brand => `
+                <li>
+                    <div class="item-header">
+                        <div class="brand-info">
+                            ${brand.logo ? `<img src="${brand.logo}" class="logo-preview">` : ''}
+                            <span class="item-name">${brand.name}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-small" onclick="openEditBrandModal('${brand.id}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteBrand('${brand.id}')">Delete</button>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Attribute management
+        function openAddAttributeModal() {
+            document.getElementById('attributeModalTitle').textContent = 'Add Attribute';
+            document.getElementById('attributeForm').reset();
+            document.getElementById('attributeId').value = '';
+            document.getElementById('attributeModal').style.display = 'block';
+        }
+
+        function openEditAttributeModal(attrId) {
+            const attr = data.attributes.find(a => a.id === attrId);
+            if (!attr) return;
+
+            document.getElementById('attributeModalTitle').textContent = 'Edit Attribute';
+            document.getElementById('attributeId').value = attr.id;
+            document.getElementById('attributeName').value = attr.name;
+            document.getElementById('attributeLowLabel').value = attr.lowLabel;
+            document.getElementById('attributeHighLabel').value = attr.highLabel;
+            document.getElementById('attributeModal').style.display = 'block';
+        }
+
+        function closeAttributeModal() {
+            document.getElementById('attributeModal').style.display = 'none';
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        function saveAttribute(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('attributeId').value || Date.now().toString();
+            const name = document.getElementById('attributeName').value;
+            const lowLabel = document.getElementById('attributeLowLabel').value;
+            const highLabel = document.getElementById('attributeHighLabel').value;
+
+            const existingIndex = data.attributes.findIndex(a => a.id === id);
+            const attribute = { id, name, lowLabel, highLabel };
+
+            if (existingIndex >= 0) {
+                data.attributes[existingIndex] = attribute;
+            } else {
+                data.attributes.push(attribute);
+            }
+
+            saveData();
+            updateUI();
+            closeAttributeModal();
+        }
+
+        function deleteAttribute(attrId) {
+            if (confirm('Are you sure you want to delete this attribute? All brand scores for this attribute will be lost.')) {
+                data.attributes = data.attributes.filter(a => a.id !== attrId);
+                // Clean up scores in brands
+                data.brands.forEach(brand => {
+                    if (brand.scores) {
+                        delete brand.scores[attrId];
+                    }
+                });
+                saveData();
+                updateUI();
+            }
+        }
+
+        function updateAttributeList() {
+            const list = document.getElementById('attributeList');
+            if (data.attributes.length === 0) {
+                list.innerHTML = '<div class="empty-state">No attributes yet. Add one to get started!</div>';
+                return;
+            }
+
+            list.innerHTML = data.attributes.map(attr => `
+                <li>
+                    <div class="item-header">
+                        <span class="item-name">${attr.name}</span>
+                        <div>
+                            <button class="btn btn-small" onclick="openEditAttributeModal('${attr.id}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteAttribute('${attr.id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        ${attr.lowLabel} ↔ ${attr.highLabel}
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Update axis dropdown selects
+        function updateAxisSelects() {
+            const xSelect = document.getElementById('xAxisSelect');
+            const ySelect = document.getElementById('yAxisSelect');
+
+            const currentX = xSelect.value;
+            const currentY = ySelect.value;
+
+            xSelect.innerHTML = data.attributes.map(attr =>
+                `<option value="${attr.id}">${attr.name}</option>`
+            ).join('');
+            ySelect.innerHTML = data.attributes.map(attr =>
+                `<option value="${attr.id}">${attr.name}</option>`
+            ).join('');
+
+            // Restore selections or set defaults
+            if (currentX && data.attributes.find(a => a.id === currentX)) {
+                xSelect.value = currentX;
+            }
+            if (currentY && data.attributes.find(a => a.id === currentY)) {
+                ySelect.value = currentY;
+            } else if (data.attributes.length > 1) {
+                ySelect.value = data.attributes[1].id;
+            }
+        }
+
+        // Chart functions with drag support
+        function updateChart() {
+            if (data.attributes.length < 2 || data.brands.length === 0) {
+                document.getElementById('plot').innerHTML =
+                    '<div class="empty-state">Add at least 2 attributes and 1 brand to view the positioning map.</div>';
+                return;
+            }
+
+            const xAttrId = document.getElementById('xAxisSelect').value;
+            const yAttrId = document.getElementById('yAxisSelect').value;
+
+            const xAttr = data.attributes.find(a => a.id === xAttrId);
+            const yAttr = data.attributes.find(a => a.id === yAttrId);
+
+            if (!xAttr || !yAttr) return;
+
+            const xMid = 50, yMid = 50;
+
+            // Separate brands with logos from those without
+            const images = data.brands
+                .filter(brand => brand.logo && brand.scores)
+                .map(brand => ({
+                    source: brand.logo,
+                    x: brand.scores[xAttrId] || 50,
+                    y: brand.scores[yAttrId] || 50,
+                    xref: "x",
+                    yref: "y",
+                    sizex: 10,
+                    sizey: 10,
+                    xanchor: "center",
+                    yanchor: "middle",
+                    layer: "above"
+                }));
+
+            const shapes = [
+                {type: "line", x0: xMid, x1: xMid, y0: 0, y1: 100, line: {color: "black", width: 2}},
+                {type: "line", x0: 0, x1: 100, y0: yMid, y1: yMid, line: {color: "black", width: 2}}
+            ];
+
+            const annotations = [
+                {x: 100, y: yMid, text: xAttr.highLabel, showarrow: false, xanchor: "left", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: 10},
+                {x: 0, y: yMid, text: xAttr.lowLabel, showarrow: false, xanchor: "right", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: -10},
+                {x: xMid, y: 100, text: yAttr.highLabel, showarrow: false, xanchor: "center", yanchor: "bottom", font: {size: 16, color: "#333", weight: "bold"}, yshift: 10},
+                {x: xMid, y: 0, text: yAttr.lowLabel, showarrow: false, xanchor: "center", yanchor: "top", font: {size: 16, color: "#333", weight: "bold"}, yshift: -10}
+            ];
+
+            // Add text annotations for brands without logos
+            data.brands
+                .filter(brand => !brand.logo && brand.scores)
+                .forEach(brand => {
+                    annotations.push({
+                        x: brand.scores[xAttrId] || 50,
+                        y: brand.scores[yAttrId] || 50,
+                        text: brand.name,
+                        showarrow: false,
+                        xanchor: "center",
+                        yanchor: "middle",
+                        font: {size: 12, color: "#007bff", weight: "bold"},
+                        bgcolor: "rgba(255, 255, 255, 0.9)",
+                        bordercolor: "#007bff",
+                        borderwidth: 2,
+                        borderpad: 4
+                    });
+                });
+
+            const layout = {
+                title: `Brand Positioning — ${xAttr.name} vs ${yAttr.name}`,
+                images: images,
+                shapes: shapes,
+                annotations: annotations,
+                xaxis: {
+                    range: [-10, 110],
+                    showgrid: false,
+                    zeroline: false,
+                    showticklabels: false,
+                    fixedrange: true
+                },
+                yaxis: {
+                    range: [-10, 110],
+                    showgrid: false,
+                    zeroline: false,
+                    showticklabels: false,
+                    fixedrange: true
+                },
+                width: 700,
+                height: 700,
+                plot_bgcolor: "white",
+                margin: {l: 60, r: 60, t: 80, b: 60},
+                dragmode: false
+            };
+
+            Plotly.newPlot('plot', [], layout, {responsive: true, displayModeBar: false, staticPlot: false});
+
+            // Enable drag functionality for logos
+            enableLogoDragging(xAttrId, yAttrId);
+        }
+
+        // Global drag state to persist across chart updates
+        let dragState = {
+            isDragging: false,
+            draggedBrand: null,
+            startX: 0,
+            startY: 0,
+            currentXAttr: null,
+            currentYAttr: null
+        };
+
+        function enableLogoDragging(xAttrId, yAttrId) {
+            const plotDiv = document.getElementById('plot');
+
+            // Store current axis IDs
+            dragState.currentXAttr = xAttrId;
+            dragState.currentYAttr = yAttrId;
+
+            // Remove existing listeners to prevent duplicates
+            const oldMouseDown = plotDiv._mouseDownHandler;
+            const oldMouseMove = plotDiv._mouseMoveHandler;
+            const oldMouseUp = plotDiv._mouseUpHandler;
+
+            if (oldMouseDown) plotDiv.removeEventListener('mousedown', oldMouseDown);
+            if (oldMouseMove) plotDiv.removeEventListener('mousemove', oldMouseMove);
+            if (oldMouseUp) plotDiv.removeEventListener('mouseup', oldMouseUp);
+
+            // Setup drag handlers
+            const handleMouseDown = function(e) {
+                if (!plotDiv._fullLayout) return;
+
+                const xaxis = plotDiv._fullLayout.xaxis;
+                const yaxis = plotDiv._fullLayout.yaxis;
+                const plotBounds = plotDiv.getBoundingClientRect();
+
+                const px = e.clientX - plotBounds.left;
+                const py = e.clientY - plotBounds.top;
+                const dataX = xaxis.p2d(px);
+                const dataY = yaxis.p2d(py);
+
+                // Find brand near click
+                dragState.draggedBrand = data.brands.find(b => {
+                    if (!b.scores) return false;
+                    const dx = Math.abs((b.scores[xAttrId] || 50) - dataX);
+                    const dy = Math.abs((b.scores[yAttrId] || 50) - dataY);
+                    return dx < 10 && dy < 10;
+                });
+
+                if (dragState.draggedBrand) {
+                    dragState.startX = e.clientX;
+                    dragState.startY = e.clientY;
+                    plotDiv.style.cursor = 'grabbing';
+                    e.preventDefault();
+                }
+            };
+
+            const handleMouseMove = function(e) {
+                if (dragState.draggedBrand && plotDiv._fullLayout) {
+                    // Check if moved enough to be considered dragging
+                    const dx = Math.abs(e.clientX - dragState.startX);
+                    const dy = Math.abs(e.clientY - dragState.startY);
+                    if (dx > 3 || dy > 3) {
+                        dragState.isDragging = true;
+                    }
+
+                    const xaxis = plotDiv._fullLayout.xaxis;
+                    const yaxis = plotDiv._fullLayout.yaxis;
+                    const plotBounds = plotDiv.getBoundingClientRect();
+
+                    const px = e.clientX - plotBounds.left;
+                    const py = e.clientY - plotBounds.top;
+                    const newX = xaxis.p2d(px);
+                    const newY = yaxis.p2d(py);
+
+                    // Update brand position (clamped to 0-100)
+                    dragState.draggedBrand.scores[xAttrId] = Math.max(0, Math.min(100, Math.round(newX)));
+                    dragState.draggedBrand.scores[yAttrId] = Math.max(0, Math.min(100, Math.round(newY)));
+
+                    // Update chart visually only (don't re-setup listeners)
+                    updateChartVisuals();
+                }
+            };
+
+            const handleMouseUp = function(e) {
+                if (dragState.draggedBrand) {
+                    saveData();
+                    setTimeout(() => {
+                        dragState.isDragging = false;
+                    }, 100);
+                }
+                dragState.draggedBrand = null;
+                plotDiv.style.cursor = 'default';
+            };
+
+            // Store handlers for later removal
+            plotDiv._mouseDownHandler = handleMouseDown;
+            plotDiv._mouseMoveHandler = handleMouseMove;
+            plotDiv._mouseUpHandler = handleMouseUp;
+
+            plotDiv.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            // Handle clicks to open edit modal
+            plotDiv.on('plotly_click', function(eventData) {
+                // Only open modal if we didn't drag
+                if (!dragState.isDragging && eventData.points && eventData.points.length > 0) {
+                    const point = eventData.points[0];
+                    const clickedX = point.x;
+                    const clickedY = point.y;
+
+                    const brand = data.brands.find(b => {
+                        if (!b.scores) return false;
+                        const dx = Math.abs((b.scores[xAttrId] || 50) - clickedX);
+                        const dy = Math.abs((b.scores[yAttrId] || 50) - clickedY);
+                        return dx < 10 && dy < 10;
+                    });
+
+                    if (brand) {
+                        openEditBrandModal(brand.id);
+                    }
+                }
+            });
+        }
+
+        // Update just the visuals without resetting event listeners
+        function updateChartVisuals() {
+            if (data.attributes.length < 2 || data.brands.length === 0) return;
+
+            const xAttrId = dragState.currentXAttr || document.getElementById('xAxisSelect').value;
+            const yAttrId = dragState.currentYAttr || document.getElementById('yAxisSelect').value;
+
+            const xAttr = data.attributes.find(a => a.id === xAttrId);
+            const yAttr = data.attributes.find(a => a.id === yAttrId);
+
+            if (!xAttr || !yAttr) return;
+
+            const xMid = 50, yMid = 50;
+
+            const images = data.brands
+                .filter(brand => brand.logo && brand.scores)
+                .map(brand => ({
+                    source: brand.logo,
+                    x: brand.scores[xAttrId] || 50,
+                    y: brand.scores[yAttrId] || 50,
+                    xref: "x",
+                    yref: "y",
+                    sizex: 10,
+                    sizey: 10,
+                    xanchor: "center",
+                    yanchor: "middle",
+                    layer: "above"
+                }));
+
+            const annotations = [
+                {x: 100, y: yMid, text: xAttr.highLabel, showarrow: false, xanchor: "left", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: 10},
+                {x: 0, y: yMid, text: xAttr.lowLabel, showarrow: false, xanchor: "right", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: -10},
+                {x: xMid, y: 100, text: yAttr.highLabel, showarrow: false, xanchor: "center", yanchor: "bottom", font: {size: 16, color: "#333", weight: "bold"}, yshift: 10},
+                {x: xMid, y: 0, text: yAttr.lowLabel, showarrow: false, xanchor: "center", yanchor: "top", font: {size: 16, color: "#333", weight: "bold"}, yshift: -10}
+            ];
+
+            // Add text annotations for brands without logos
+            data.brands
+                .filter(brand => !brand.logo && brand.scores)
+                .forEach(brand => {
+                    annotations.push({
+                        x: brand.scores[xAttrId] || 50,
+                        y: brand.scores[yAttrId] || 50,
+                        text: brand.name,
+                        showarrow: false,
+                        xanchor: "center",
+                        yanchor: "middle",
+                        font: {size: 12, color: "#007bff", weight: "bold"},
+                        bgcolor: "rgba(255, 255, 255, 0.9)",
+                        bordercolor: "#007bff",
+                        borderwidth: 2,
+                        borderpad: 4
+                    });
+                });
+
+            // Use Plotly.relayout to update without recreating the plot
+            Plotly.relayout('plot', {
+                images: images,
+                annotations: annotations
+            });
+        }
+
+        // CSV Export/Import
+        function exportCSVTemplate() {
+            // Create CSV header - always include Brand Name and Logo Path
+            let csv = 'Brand Name,Logo Path';
+
+            // Add attribute columns if any exist
+            if (data.attributes.length > 0) {
+                data.attributes.forEach(attr => {
+                    csv += `,${attr.name}`;
+                });
+            } else {
+                // Add example attribute columns if no attributes exist
+                csv += ',Attribute1,Attribute2,Attribute3';
+            }
+            csv += '\n';
+
+            // Add existing brands or example rows
+            if (data.brands.length > 0) {
+                data.brands.forEach(brand => {
+                    csv += `"${brand.name}","logo_filename.png"`;
+                    if (data.attributes.length > 0) {
+                        data.attributes.forEach(attr => {
+                            csv += `,${brand.scores[attr.id] || 50}`;
+                        });
+                    } else {
+                        csv += ',50,50,50';
+                    }
+                    csv += '\n';
+                });
+            } else {
+                // Add example rows
+                csv += '"Example Brand 1","logo1.png",75,60,80\n';
+                csv += '"Example Brand 2","logo2.png",45,85,55\n';
+                csv += '"Example Brand 3","logo3.png",90,50,70\n';
+            }
+
+            // Download
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'brand-positioning-template.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importCSV() {
+            document.getElementById('importCSVFile').click();
+        }
+
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    try {
+                        const rows = results.data;
+                        if (rows.length === 0) {
+                            alert('CSV file is empty.');
+                            return;
+                        }
+
+                        // Extract attribute names from header (skip Brand Name and Logo Path)
+                        const headers = Object.keys(rows[0]);
+                        const attributeNames = headers.filter(h => h !== 'Brand Name' && h !== 'Logo Path' && h.trim() !== '');
+
+                        if (attributeNames.length === 0) {
+                            alert('No attribute columns found in CSV.');
+                            return;
+                        }
+
+                        // Create or update attributes
+                        attributeNames.forEach(attrName => {
+                            const existing = data.attributes.find(a => a.name === attrName);
+                            if (!existing) {
+                                data.attributes.push({
+                                    id: Date.now().toString() + Math.random(),
+                                    name: attrName,
+                                    lowLabel: 'Low',
+                                    highLabel: 'High'
+                                });
+                            }
+                        });
+
+                        // Import brands
+                        let importedCount = 0;
+                        rows.forEach(row => {
+                            const brandName = row['Brand Name'];
+                            if (!brandName || brandName.trim() === '') return;
+
+                            const scores = {};
+                            attributeNames.forEach(attrName => {
+                                const attr = data.attributes.find(a => a.name === attrName);
+                                if (attr) {
+                                    const value = parseInt(row[attrName]);
+                                    scores[attr.id] = isNaN(value) ? 50 : Math.max(0, Math.min(100, value));
+                                }
+                            });
+
+                            // Check if brand exists
+                            const existingBrand = data.brands.find(b => b.name === brandName);
+                            if (existingBrand) {
+                                existingBrand.scores = scores;
+                            } else {
+                                data.brands.push({
+                                    id: Date.now().toString() + Math.random(),
+                                    name: brandName,
+                                    logo: null,
+                                    scores: scores
+                                });
+                                importedCount++;
+                            }
+                        });
+
+                        saveData();
+                        updateUI();
+                        alert(`CSV imported successfully! ${importedCount} new brands added. Note: You'll need to upload logos separately for each brand.`);
+                    } catch (error) {
+                        alert('Error parsing CSV: ' + error.message);
+                    }
+                }
+            });
+        }
+
+        // Data import/export
+        function exportData() {
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'brand-positioning-data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.brands && imported.attributes) {
+                        data = imported;
+                        saveData();
+                        updateUI();
+                        alert('Data imported successfully!');
+                    } else {
+                        alert('Invalid data format.');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                data = { brands: [], attributes: [] };
+                saveData();
+                updateUI();
+            }
+        }
+
+        // Export chart as PNG with logos included
+        async function exportPDF() {
+            if (data.attributes.length < 2 || data.brands.length === 0) {
+                alert('Please add at least 2 attributes and 1 brand before exporting.');
+                return;
+            }
+
+            const plotDiv = document.getElementById('plot');
+
+            try {
+                // Wait for all images to load before exporting
+                await waitForImagesToLoad();
+
+                // Export as PNG with higher quality settings
+                const imgData = await Plotly.toImage(plotDiv, {
+                    format: 'png',
+                    width: 1400,
+                    height: 1400,
+                    scale: 3
+                });
+
+                // Create a download link
+                const link = document.createElement('a');
+                link.href = imgData;
+                link.download = 'brand-positioning-map.png';
+                link.click();
+            } catch (error) {
+                console.error('Error exporting chart:', error);
+                alert('Error exporting chart. Please try again.');
+            }
+        }
+
+        // Helper function to ensure all images are loaded
+        function waitForImagesToLoad() {
+            return new Promise((resolve) => {
+                const plotDiv = document.getElementById('plot');
+                const images = plotDiv.querySelectorAll('image');
+
+                if (images.length === 0) {
+                    resolve();
+                    return;
+                }
+
+                let loadedCount = 0;
+                const totalImages = images.length;
+
+                images.forEach(img => {
+                    if (img.complete || img.naturalWidth > 0) {
+                        loadedCount++;
+                    } else {
+                        img.addEventListener('load', () => {
+                            loadedCount++;
+                            if (loadedCount === totalImages) {
+                                resolve();
+                            }
+                        });
+                    }
+                });
+
+                // If all images are already loaded
+                if (loadedCount === totalImages) {
+                    resolve();
+                }
+
+                // Fallback timeout
+                setTimeout(resolve, 2000);
+            });
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
