@@ -1,0 +1,264 @@
+/* About Me Page Styles */
+
+.page-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.page-header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--xavier-blue);
+}
+
+/* Bio Section */
+.bio-section {
+    margin-bottom: 5rem;
+}
+
+.bio-section p {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--xavier-blue);
+    margin-bottom: 1.5rem;
+}
+
+.bio-section p:first-of-type {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+}
+
+.connect-section {
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.connect-btn {
+    display: inline-block;
+    background: var(--xavier-blue);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.connect-btn:hover {
+    background: var(--xavier-grey);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(12, 35, 64, 0.2);
+}
+
+/* CV Section */
+.cv-section {
+    margin-bottom: 4rem;
+}
+
+.cv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.cv-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--xavier-grey);
+    flex: 1;
+}
+
+.download-cv-btn {
+    display: inline-block;
+    background: var(--xavier-blue);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.download-cv-btn:hover {
+    background: var(--xavier-grey);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(12, 35, 64, 0.2);
+}
+
+.cv-section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Experience Section */
+.experience-section,
+.education-section,
+.skills-section {
+    margin-bottom: 4rem;
+}
+
+.experience-section h2,
+.education-section h2,
+.skills-section h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--xavier-grey);
+}
+
+.experience-item,
+.education-item {
+    background: #f8f9fa;
+    border-left: 4px solid var(--xavier-grey);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 8px 8px 0;
+    transition: all 0.3s;
+}
+
+.experience-item:hover,
+.education-item:hover {
+    border-left-color: var(--xavier-blue);
+    box-shadow: 0 2px 8px rgba(12, 35, 64, 0.1);
+}
+
+.exp-header,
+.edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.exp-header h3,
+.edu-header h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin: 0;
+}
+
+.exp-company,
+.edu-school {
+    font-weight: 600;
+    color: var(--xavier-grey);
+}
+
+.exp-date,
+.edu-date {
+    font-size: 0.95rem;
+    color: var(--xavier-grey);
+    margin-bottom: 0.75rem;
+    font-style: italic;
+}
+
+.exp-description,
+.edu-description {
+    color: var(--xavier-blue);
+    line-height: 1.6;
+}
+
+.exp-bullets {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style-type: disc;
+}
+
+.exp-bullets li {
+    color: var(--xavier-blue);
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.exp-bullets li:last-child {
+    margin-bottom: 0;
+}
+
+/* Skills Section */
+.skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.skill-tag {
+    background: var(--xavier-grey);
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.skill-tag:hover {
+    background: var(--xavier-blue);
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-content {
+        padding: 2rem 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .bio-section p:first-of-type {
+        font-size: 1.2rem;
+    }
+
+    .bio-section p {
+        font-size: 1rem;
+    }
+
+    .exp-header,
+    .edu-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .connect-btn {
+        font-size: 1rem;
+        padding: 0.9rem 2rem;
+    }
+
+    .skills-grid {
+        gap: 0.75rem;
+    }
+
+    .skill-tag {
+        font-size: 0.85rem;
+        padding: 0.6rem 1.2rem;
+    }
+}

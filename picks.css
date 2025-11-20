@@ -1,0 +1,325 @@
+/* My Picks Page Styles */
+
+.page-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    padding: 2rem 0;
+}
+
+.page-header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--xavier-blue);
+    margin-bottom: 1rem;
+}
+
+.page-description {
+    font-size: 1.15rem;
+    color: var(--xavier-grey);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* Recent Picks Section */
+.recent-picks {
+    margin-bottom: 5rem;
+}
+
+.recent-picks h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin-bottom: 2rem;
+}
+
+.recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.pick-card {
+    background: var(--xavier-grey);
+    border: 3px solid var(--xavier-grey);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s;
+}
+
+.pick-card:hover {
+    background: var(--xavier-blue);
+    border-color: var(--xavier-blue);
+}
+
+.pick-medium {
+    display: inline-block;
+    background: var(--xavier-blue);
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.pick-card:hover .pick-medium {
+    background: var(--xavier-grey);
+}
+
+.pick-card h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin-bottom: 0.75rem;
+}
+
+.pick-card:hover h3 {
+    color: white;
+}
+
+.pick-description {
+    color: var(--xavier-blue);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.pick-card:hover .pick-description {
+    color: white;
+}
+
+.expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--xavier-blue);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s;
+}
+
+.pick-card:hover .expand-btn {
+    color: var(--xavier-grey);
+}
+
+.expand-btn:hover {
+    transform: translateX(5px);
+}
+
+.pick-thoughts {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--xavier-blue);
+    color: var(--xavier-blue);
+    line-height: 1.7;
+}
+
+.pick-card:hover .pick-thoughts {
+    border-top-color: white;
+    color: white;
+}
+
+.pick-link {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(12, 35, 64, 0.2);
+    font-size: 0.9rem;
+    color: var(--xavier-blue);
+}
+
+.pick-card:hover .pick-link {
+    border-top-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.pick-link a {
+    color: var(--xavier-blue);
+    word-break: break-all;
+}
+
+.pick-card:hover .pick-link a {
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Database Section */
+.picks-database {
+    margin-top: 5rem;
+}
+
+.database-header {
+    margin-bottom: 2rem;
+}
+
+.database-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin-bottom: 1.5rem;
+}
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: #f5f5f5;
+    border-radius: 12px;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid var(--xavier-grey);
+    color: var(--xavier-blue);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-btn:hover {
+    background: var(--xavier-grey);
+    color: white;
+    border-color: var(--xavier-grey);
+}
+
+.filter-btn.active {
+    background: var(--xavier-blue);
+    color: white;
+    border-color: var(--xavier-blue);
+}
+
+/* Table/List */
+.picks-table {
+    margin-top: 2rem;
+}
+
+.table-row {
+    background: white;
+    border: 2px solid var(--xavier-grey);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+}
+
+.table-row:hover {
+    border-color: var(--xavier-blue);
+    box-shadow: 0 4px 12px rgba(12, 35, 64, 0.1);
+}
+
+.row-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.medium-badge {
+    background: var(--xavier-blue);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.row-title h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--xavier-blue);
+    margin: 0;
+}
+
+.row-description {
+    color: var(--xavier-grey);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.expand-thoughts-btn {
+    background: transparent;
+    border: none;
+    color: var(--xavier-blue);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s;
+}
+
+.expand-thoughts-btn:hover {
+    color: var(--xavier-grey);
+    transform: translateX(5px);
+}
+
+.row-thoughts {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #e0e0e0;
+    color: var(--xavier-blue);
+    line-height: 1.7;
+}
+
+.row-link {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.9rem;
+    color: var(--xavier-grey);
+}
+
+.row-link a {
+    color: var(--xavier-blue);
+    word-break: break-all;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-content {
+        padding: 2rem 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .recent-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-bar {
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .row-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
