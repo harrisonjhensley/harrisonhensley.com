@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Brand Positioning Map - Interactive</title>
+    <title>Perceptual Mapping Tool - Interactive</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -244,20 +244,20 @@
     <div class="container">
         <div class="sidebar">
             <h1>
-                <span>Brand Positioning Map</span>
+                <span>Perceptual Mapping Tool</span>
                 <span class="help-icon" onclick="openHelpModal()" title="Help & Instructions">?</span>
             </h1>
-
-            <div class="section">
-                <h2>Brands</h2>
-                <button class="btn" onclick="openAddBrandModal()">+ Add Brand</button>
-                <ul class="item-list" id="brandList"></ul>
-            </div>
 
             <div class="section">
                 <h2>Attributes</h2>
                 <button class="btn" onclick="openAddAttributeModal()">+ Add Attribute</button>
                 <ul class="item-list" id="attributeList"></ul>
+            </div>
+
+            <div class="section">
+                <h2>Brands</h2>
+                <button class="btn" onclick="openAddBrandModal()">+ Add Brand</button>
+                <ul class="item-list" id="brandList"></ul>
             </div>
 
             <div class="import-export">
@@ -271,12 +271,8 @@
                 <input type="file" id="importCSVFile" style="display:none" accept=".csv" onchange="handleCSVImport(event)">
                 <button class="btn btn-danger" onclick="clearAllData()">Clear All</button>
 
-                <div class="info-box">
-                    <strong>Tip:</strong> Drag logos on the map to reposition brands! Changes are saved automatically.
-                </div>
-
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
-                    <a href="https://harrisonhensley.com" target="_blank" style="color: #999; text-decoration: none; font-size: 13px;">harrisonhensley.com</a>
+                    <p style="color: #666; font-size: 13px; margin: 0;">Created by Harrison Hensley</p>
                 </div>
             </div>
         </div>
@@ -352,7 +348,7 @@
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>How to Use Brand Positioning Map</h2>
+                <h2>How to Use Perceptual Mapping Tool</h2>
                 <span class="close" onclick="closeHelpModal()">&times;</span>
             </div>
 
@@ -1260,33 +1256,40 @@
                 const images = plotDiv.querySelectorAll('image');
 
                 if (images.length === 0) {
-                    resolve();
+                    // No images, wait a bit for chart to render
+                    setTimeout(resolve, 500);
                     return;
                 }
 
                 let loadedCount = 0;
                 const totalImages = images.length;
+                const loadTimeout = setTimeout(() => {
+                    console.log('Image load timeout, proceeding with export');
+                    resolve();
+                }, 3000);
+
+                const checkComplete = () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        clearTimeout(loadTimeout);
+                        // Extra delay to ensure rendering is complete
+                        setTimeout(resolve, 300);
+                    }
+                };
 
                 images.forEach(img => {
-                    if (img.complete || img.naturalWidth > 0) {
-                        loadedCount++;
-                    } else {
-                        img.addEventListener('load', () => {
-                            loadedCount++;
-                            if (loadedCount === totalImages) {
-                                resolve();
-                            }
-                        });
+                    const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+                    if (!href) {
+                        checkComplete();
+                        return;
                     }
+
+                    // Create a test image to check if it's loaded
+                    const testImg = new Image();
+                    testImg.onload = checkComplete;
+                    testImg.onerror = checkComplete; // Still proceed even if error
+                    testImg.src = href;
                 });
-
-                // If all images are already loaded
-                if (loadedCount === totalImages) {
-                    resolve();
-                }
-
-                // Fallback timeout
-                setTimeout(resolve, 2000);
             });
         }
 
