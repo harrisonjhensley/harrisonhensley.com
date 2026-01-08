@@ -238,6 +238,30 @@
             cursor: move;
             opacity: 0.7;
         }
+        .edit-mode-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            padding: 10px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .edit-mode-btn:hover {
+            background: #218838;
+        }
+        .edit-mode-btn.active {
+            background: #dc3545;
+        }
+        .edit-mode-btn.active:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -288,7 +312,8 @@
                     <select id="yAxisSelect" onchange="updateChart()"></select>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="position: relative;">
+                <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">Enter Edit Mode</button>
                 <div id="plot"></div>
             </div>
         </div>
@@ -411,12 +436,39 @@
             attributes: []
         };
 
+        // Initialize default attributes if none exist
+        function initializeDefaultAttributes() {
+            if (data.attributes.length === 0) {
+                data.attributes = [
+                    {
+                        id: 'price_' + Date.now(),
+                        name: 'Price',
+                        lowLabel: 'Low',
+                        highLabel: 'High'
+                    },
+                    {
+                        id: 'convenience_' + Date.now(),
+                        name: 'Convenience',
+                        lowLabel: 'Low',
+                        highLabel: 'High'
+                    },
+                    {
+                        id: 'quality_' + Date.now(),
+                        name: 'Quality',
+                        lowLabel: 'Low',
+                        highLabel: 'High'
+                    }
+                ];
+            }
+        }
+
         // Load data from localStorage
         function loadData() {
             const stored = localStorage.getItem('brandPositioningData');
             if (stored) {
                 data = JSON.parse(stored);
             }
+            initializeDefaultAttributes();
             updateUI();
         }
 
@@ -541,7 +593,15 @@
             });
 
             const existingIndex = data.brands.findIndex(b => b.id === id);
-            const brand = { id, name, logo, scores };
+            const existingBrand = existingIndex >= 0 ? data.brands[existingIndex] : null;
+            const brand = {
+                id,
+                name,
+                logo,
+                scores,
+                // Preserve custom positions if they exist
+                customPosition: existingBrand ? existingBrand.customPosition : null
+            };
 
             if (existingIndex >= 0) {
                 data.brands[existingIndex] = brand;
@@ -704,9 +764,9 @@
 
         // Chart functions with drag support
         function updateChart() {
-            if (data.attributes.length < 2 || data.brands.length === 0) {
+            if (data.brands.length === 0) {
                 document.getElementById('plot').innerHTML =
-                    '<div class="empty-state">Add at least 2 attributes and 1 brand to view the positioning map.</div>';
+                    '<div class="empty-state">Add brands to view the positioning map.</div>';
                 return;
             }
 
@@ -721,25 +781,85 @@
             const xMid = 50, yMid = 50;
 
             // Separate brands with logos from those without
-            const images = data.brands
-                .filter(brand => brand.logo && brand.scores)
-                .map(brand => ({
-                    source: brand.logo,
-                    x: brand.scores[xAttrId] || 50,
-                    y: brand.scores[yAttrId] || 50,
-                    xref: "x",
-                    yref: "y",
-                    sizex: 10,
-                    sizey: 10,
-                    xanchor: "center",
-                    yanchor: "middle",
-                    layer: "above"
-                }));
-
+            const images = [];
             const shapes = [
                 {type: "line", x0: xMid, x1: xMid, y0: 0, y1: 100, line: {color: "black", width: 2}},
                 {type: "line", x0: 0, x1: 100, y0: yMid, y1: yMid, line: {color: "black", width: 2}}
             ];
+
+            // First pass: Add connection lines and dots (these will be behind logos)
+            data.brands
+                .filter(brand => brand.logo && brand.scores)
+                .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // If custom position exists and is different from data position, add dot and line first
+                    if (customPos && (Math.abs(displayX - dataX) > 1 || Math.abs(displayY - dataY) > 1)) {
+                        // Add connection line from dot to logo (added first so it's behind)
+                        shapes.push({
+                            type: "line",
+                            x0: dataX,
+                            x1: displayX,
+                            y0: dataY,
+                            y1: displayY,
+                            line: {
+                                color: "#007bff",
+                                width: 1.5,
+                                dash: "dot"
+                            },
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+
+                        // Add a small dot at the data position
+                        shapes.push({
+                            type: "circle",
+                            x0: dataX - 1.5,
+                            x1: dataX + 1.5,
+                            y0: dataY - 1.5,
+                            y1: dataY + 1.5,
+                            fillcolor: "#007bff",
+                            line: {color: "#007bff", width: 2},
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+                    }
+                });
+
+            // Second pass: Add logo images (these will be on top)
+            data.brands
+                .filter(brand => brand.logo && brand.scores)
+                .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // Add the logo image at display position
+                    images.push({
+                        source: brand.logo,
+                        x: displayX,
+                        y: displayY,
+                        xref: "x",
+                        yref: "y",
+                        sizex: 10,
+                        sizey: 10,
+                        xanchor: "center",
+                        yanchor: "middle",
+                        layer: editMode ? "below" : "above" // In edit mode, put images below so scatter points are clickable
+                    });
+                });
 
             const annotations = [
                 {x: 100, y: yMid, text: xAttr.highLabel, showarrow: false, xanchor: "left", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: 10},
@@ -767,6 +887,28 @@
                     });
                 });
 
+            // Create invisible scatter points for each brand to enable clicking
+            const scatterData = [{
+                x: data.brands.filter(b => b.logo && b.scores).map(b => {
+                    const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
+                    return customPos ? customPos.x : (b.scores[xAttrId] || 50);
+                }),
+                y: data.brands.filter(b => b.logo && b.scores).map(b => {
+                    const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
+                    return customPos ? customPos.y : (b.scores[yAttrId] || 50);
+                }),
+                mode: 'markers',
+                type: 'scatter',
+                marker: {
+                    size: 40, // Larger hit area
+                    color: 'rgba(0,0,0,0)', // Invisible
+                    line: { width: 0 }
+                },
+                hoverinfo: 'none',
+                showlegend: false
+            }];
+
+
             const layout = {
                 title: `Brand Positioning — ${xAttr.name} vs ${yAttr.name}`,
                 images: images,
@@ -789,11 +931,10 @@
                 width: 700,
                 height: 700,
                 plot_bgcolor: "white",
-                margin: {l: 60, r: 60, t: 80, b: 60},
-                dragmode: false
+                margin: {l: 60, r: 60, t: 80, b: 60}
             };
 
-            Plotly.newPlot('plot', [], layout, {responsive: true, displayModeBar: false, staticPlot: false});
+            Plotly.newPlot('plot', scatterData, layout, {responsive: true, displayModeBar: false});
 
             // Enable drag functionality for logos
             enableLogoDragging(xAttrId, yAttrId);
@@ -812,6 +953,22 @@
             currentYAttr: null
         };
 
+        // Edit mode state
+        let editMode = false;
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.getElementById('editModeBtn');
+            if (editMode) {
+                btn.textContent = 'Exit Edit Mode';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = 'Enter Edit Mode';
+                btn.classList.remove('active');
+            }
+            updateChart();
+        }
+
         function enableLogoDragging(xAttrId, yAttrId) {
             const plotDiv = document.getElementById('plot');
 
@@ -825,12 +982,12 @@
             const oldMouseUp = plotDiv._mouseUpHandler;
 
             if (oldMouseDown) plotDiv.removeEventListener('mousedown', oldMouseDown);
-            if (oldMouseMove) plotDiv.removeEventListener('mousemove', oldMouseMove);
-            if (oldMouseUp) plotDiv.removeEventListener('mouseup', oldMouseUp);
+            if (oldMouseMove) document.removeEventListener('mousemove', oldMouseMove);
+            if (oldMouseUp) document.removeEventListener('mouseup', oldMouseUp);
 
             // Setup drag handlers
             const handleMouseDown = function(e) {
-                if (!plotDiv._fullLayout) return;
+                if (!plotDiv._fullLayout || !editMode) return; // Only drag in edit mode
 
                 const xaxis = plotDiv._fullLayout.xaxis;
                 const yaxis = plotDiv._fullLayout.yaxis;
@@ -841,11 +998,14 @@
                 const dataX = xaxis.p2d(px);
                 const dataY = yaxis.p2d(py);
 
-                // Find brand near click
+                // Find brand near click (check display position, not data position)
                 dragState.draggedBrand = data.brands.find(b => {
                     if (!b.scores) return false;
-                    const dx = Math.abs((b.scores[xAttrId] || 50) - dataX);
-                    const dy = Math.abs((b.scores[yAttrId] || 50) - dataY);
+                    const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : (b.scores[xAttrId] || 50);
+                    const displayY = customPos ? customPos.y : (b.scores[yAttrId] || 50);
+                    const dx = Math.abs(displayX - dataX);
+                    const dy = Math.abs(displayY - dataY);
                     return dx < 10 && dy < 10;
                 });
 
@@ -875,9 +1035,15 @@
                     const newX = xaxis.p2d(px);
                     const newY = yaxis.p2d(py);
 
-                    // Update brand position (clamped to 0-100)
-                    dragState.draggedBrand.scores[xAttrId] = Math.max(0, Math.min(100, Math.round(newX)));
-                    dragState.draggedBrand.scores[yAttrId] = Math.max(0, Math.min(100, Math.round(newY)));
+                    // Store custom position for this axis combination (clamped to 0-100)
+                    const axisKey = `${xAttrId}_${yAttrId}`;
+                    if (!dragState.draggedBrand.customPosition) {
+                        dragState.draggedBrand.customPosition = {};
+                    }
+                    dragState.draggedBrand.customPosition[axisKey] = {
+                        x: Math.max(0, Math.min(100, Math.round(newX))),
+                        y: Math.max(0, Math.min(100, Math.round(newY)))
+                    };
 
                     // Update chart visually only (don't re-setup listeners)
                     updateChartVisuals();
@@ -906,16 +1072,19 @@
 
             // Handle clicks to open edit modal
             plotDiv.on('plotly_click', function(eventData) {
-                // Only open modal if we didn't drag
-                if (!dragState.isDragging && eventData.points && eventData.points.length > 0) {
+                // Only open modal if we didn't drag and not in edit mode
+                if (!editMode && !dragState.isDragging && eventData.points && eventData.points.length > 0) {
                     const point = eventData.points[0];
                     const clickedX = point.x;
                     const clickedY = point.y;
 
                     const brand = data.brands.find(b => {
                         if (!b.scores) return false;
-                        const dx = Math.abs((b.scores[xAttrId] || 50) - clickedX);
-                        const dy = Math.abs((b.scores[yAttrId] || 50) - clickedY);
+                        const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
+                        const displayX = customPos ? customPos.x : (b.scores[xAttrId] || 50);
+                        const displayY = customPos ? customPos.y : (b.scores[yAttrId] || 50);
+                        const dx = Math.abs(displayX - clickedX);
+                        const dy = Math.abs(displayY - clickedY);
                         return dx < 10 && dy < 10;
                     });
 
@@ -940,20 +1109,82 @@
 
             const xMid = 50, yMid = 50;
 
-            const images = data.brands
+            const images = [];
+            const shapes = [];
+
+            // First pass: Add connection lines and dots (these will be behind logos)
+            data.brands
                 .filter(brand => brand.logo && brand.scores)
-                .map(brand => ({
-                    source: brand.logo,
-                    x: brand.scores[xAttrId] || 50,
-                    y: brand.scores[yAttrId] || 50,
-                    xref: "x",
-                    yref: "y",
-                    sizex: 10,
-                    sizey: 10,
-                    xanchor: "center",
-                    yanchor: "middle",
-                    layer: "above"
-                }));
+                .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // If custom position exists and is different from data position, add dot and line first
+                    if (customPos && (Math.abs(displayX - dataX) > 1 || Math.abs(displayY - dataY) > 1)) {
+                        // Add connection line from dot to logo (added first so it's behind)
+                        shapes.push({
+                            type: "line",
+                            x0: dataX,
+                            x1: displayX,
+                            y0: dataY,
+                            y1: displayY,
+                            line: {
+                                color: "#007bff",
+                                width: 1.5,
+                                dash: "dot"
+                            },
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+
+                        // Add a small dot at the data position
+                        shapes.push({
+                            type: "circle",
+                            x0: dataX - 1.5,
+                            x1: dataX + 1.5,
+                            y0: dataY - 1.5,
+                            y1: dataY + 1.5,
+                            fillcolor: "#007bff",
+                            line: {color: "#007bff", width: 2},
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+                    }
+                });
+
+            // Second pass: Add logo images (these will be on top)
+            data.brands
+                .filter(brand => brand.logo && brand.scores)
+                .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // Add the logo image at display position
+                    images.push({
+                        source: brand.logo,
+                        x: displayX,
+                        y: displayY,
+                        xref: "x",
+                        yref: "y",
+                        sizex: 10,
+                        sizey: 10,
+                        xanchor: "center",
+                        yanchor: "middle",
+                        layer: editMode ? "below" : "above" // In edit mode, put images below so scatter points are clickable
+                    });
+                });
 
             const annotations = [
                 {x: 100, y: yMid, text: xAttr.highLabel, showarrow: false, xanchor: "left", yanchor: "middle", font: {size: 16, color: "#333", weight: "bold"}, xshift: 10},
@@ -981,16 +1212,117 @@
                     });
                 });
 
+
             // Use Plotly.relayout to update without recreating the plot
             Plotly.relayout('plot', {
                 images: images,
+                shapes: shapes,
                 annotations: annotations
             });
+
+            // Update permanent label positions in edit mode
+            if (editMode) {
+                const plotDiv = document.getElementById('plot');
+                const labels = document.querySelectorAll('.brand-label-permanent');
+                const brandsWithLogos = data.brands.filter(b => b.logo && b.scores);
+
+                labels.forEach((label, index) => {
+                    if (brandsWithLogos[index]) {
+                        const brand = brandsWithLogos[index];
+                        const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                        const displayX = customPos ? customPos.x : (brand.scores[xAttrId] || 50);
+                        const displayY = customPos ? customPos.y : (brand.scores[yAttrId] || 50);
+                        updateLabelPosition(label, displayX, displayY, plotDiv);
+                    }
+                });
+            }
+        }
+
+        // Helper function to update label position
+        function updateLabelPosition(label, dataX, dataY, plotDiv) {
+            if (!plotDiv._fullLayout) return;
+
+            const xaxis = plotDiv._fullLayout.xaxis;
+            const yaxis = plotDiv._fullLayout.yaxis;
+            const plotBounds = plotDiv.getBoundingClientRect();
+
+            // Convert data coordinates to pixel coordinates
+            const px = xaxis.d2p(dataX);
+            const py = yaxis.d2p(dataY);
+
+            label.style.left = (plotBounds.left + px + 15) + 'px';
+            label.style.top = (plotBounds.top + py - 30) + 'px';
         }
 
         // Add hover labels to show brand names
         function addHoverLabels(xAttrId, yAttrId) {
             const plotDiv = document.getElementById('plot');
+
+            // Remove old hover label if it exists
+            const oldLabel = document.getElementById('hover-label');
+            if (oldLabel) oldLabel.remove();
+
+            // Remove old permanent labels if they exist
+            document.querySelectorAll('.brand-label-permanent').forEach(el => el.remove());
+
+            // In edit mode, create permanent visible labels for all brands
+            if (editMode) {
+                data.brands
+                    .filter(brand => brand.logo && brand.scores)
+                    .forEach(brand => {
+                        const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                        const displayX = customPos ? customPos.x : (brand.scores[xAttrId] || 50);
+                        const displayY = customPos ? customPos.y : (brand.scores[yAttrId] || 50);
+
+                        const label = document.createElement('div');
+                        label.className = 'brand-label-permanent';
+                        label.textContent = brand.name;
+                        label.style.cssText = `
+                            position: absolute;
+                            background: rgba(0, 123, 255, 0.9);
+                            color: white;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-size: 11px;
+                            font-weight: 600;
+                            pointer-events: none;
+                            z-index: 10000;
+                            white-space: nowrap;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                        `;
+                        document.body.appendChild(label);
+
+                        // Update position based on chart coordinates
+                        updateLabelPosition(label, displayX, displayY, plotDiv);
+                    });
+
+                // Add instruction text
+                const instructionLabel = document.createElement('div');
+                instructionLabel.className = 'brand-label-permanent';
+                instructionLabel.textContent = 'Click and hold blue brand name to adjust logo position';
+                instructionLabel.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(102, 102, 102, 0.9);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    font-style: italic;
+                    pointer-events: none;
+                    z-index: 10000;
+                    white-space: nowrap;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                `;
+                document.body.appendChild(instructionLabel);
+
+                return; // Don't create hover label in edit mode
+            }
+
+            // Normal mode: create hover label
             const hoverLabel = document.createElement('div');
             hoverLabel.id = 'hover-label';
             hoverLabel.style.cssText = `
@@ -1010,7 +1342,7 @@
             document.body.appendChild(hoverLabel);
 
             plotDiv.addEventListener('mousemove', function(e) {
-                if (!plotDiv._fullLayout) return;
+                if (!plotDiv._fullLayout || editMode) return; // Skip in edit mode
 
                 const xaxis = plotDiv._fullLayout.xaxis;
                 const yaxis = plotDiv._fullLayout.yaxis;
@@ -1021,11 +1353,14 @@
                 const dataX = xaxis.p2d(px);
                 const dataY = yaxis.p2d(py);
 
-                // Find brand near cursor
+                // Find brand near cursor (check display position)
                 const hoveredBrand = data.brands.find(b => {
                     if (!b.scores || !b.logo) return false;
-                    const dx = Math.abs((b.scores[xAttrId] || 50) - dataX);
-                    const dy = Math.abs((b.scores[yAttrId] || 50) - dataY);
+                    const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : (b.scores[xAttrId] || 50);
+                    const displayY = customPos ? customPos.y : (b.scores[yAttrId] || 50);
+                    const dx = Math.abs(displayX - dataX);
+                    const dy = Math.abs(displayY - dataY);
                     return dx < 8 && dy < 8;
                 });
 
@@ -1040,7 +1375,9 @@
             });
 
             plotDiv.addEventListener('mouseleave', function() {
-                hoverLabel.style.display = 'none';
+                if (!editMode) {
+                    hoverLabel.style.display = 'none';
+                }
             });
         }
 
