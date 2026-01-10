@@ -332,9 +332,10 @@
                 <label>Brand Name:</label>
                 <input type="text" id="brandName" required>
 
-                <label>Brand Logo:</label>
+                <label>Brand Logo (Optional):</label>
                 <input type="file" id="brandLogo" accept="image/*" onchange="previewLogo(event)">
                 <img id="logoPreview" style="max-width: 200px; margin: 10px 0; display: none;">
+                <div class="info-box" style="margin-top: 5px;">If no logo is provided, the brand name will be displayed as text.</div>
 
                 <div id="brandScores"></div>
 
@@ -868,13 +869,53 @@
                 {x: xMid, y: 0, text: yAttr.lowLabel, showarrow: false, xanchor: "center", yanchor: "top", font: {size: 16, color: "#333", weight: "bold"}, yshift: -10}
             ];
 
-            // Add text annotations for brands without logos
+            // Add text annotations for brands without logos (with custom position support)
             data.brands
                 .filter(brand => !brand.logo && brand.scores)
                 .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // If custom position exists and is different, add dot and line
+                    if (customPos && (Math.abs(displayX - dataX) > 1 || Math.abs(displayY - dataY) > 1)) {
+                        shapes.push({
+                            type: "line",
+                            x0: dataX,
+                            x1: displayX,
+                            y0: dataY,
+                            y1: displayY,
+                            line: {
+                                color: "#007bff",
+                                width: 1.5,
+                                dash: "dot"
+                            },
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+
+                        shapes.push({
+                            type: "circle",
+                            x0: dataX - 1.5,
+                            x1: dataX + 1.5,
+                            y0: dataY - 1.5,
+                            y1: dataY + 1.5,
+                            fillcolor: "#007bff",
+                            line: {color: "#007bff", width: 2},
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+                    }
+
                     annotations.push({
-                        x: brand.scores[xAttrId] || 50,
-                        y: brand.scores[yAttrId] || 50,
+                        x: displayX,
+                        y: displayY,
                         text: brand.name,
                         showarrow: false,
                         xanchor: "center",
@@ -887,13 +928,13 @@
                     });
                 });
 
-            // Create invisible scatter points for each brand to enable clicking
+            // Create invisible scatter points for each brand to enable clicking (both with and without logos)
             const scatterData = [{
-                x: data.brands.filter(b => b.logo && b.scores).map(b => {
+                x: data.brands.filter(b => b.scores).map(b => {
                     const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
                     return customPos ? customPos.x : (b.scores[xAttrId] || 50);
                 }),
-                y: data.brands.filter(b => b.logo && b.scores).map(b => {
+                y: data.brands.filter(b => b.scores).map(b => {
                     const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
                     return customPos ? customPos.y : (b.scores[yAttrId] || 50);
                 }),
@@ -1193,13 +1234,53 @@
                 {x: xMid, y: 0, text: yAttr.lowLabel, showarrow: false, xanchor: "center", yanchor: "top", font: {size: 16, color: "#333", weight: "bold"}, yshift: -10}
             ];
 
-            // Add text annotations for brands without logos
+            // Add text annotations for brands without logos (with custom position support)
             data.brands
                 .filter(brand => !brand.logo && brand.scores)
                 .forEach(brand => {
+                    const dataX = brand.scores[xAttrId] || 50;
+                    const dataY = brand.scores[yAttrId] || 50;
+
+                    // Get custom position for this axis combination
+                    const customPos = brand.customPosition && brand.customPosition[`${xAttrId}_${yAttrId}`];
+                    const displayX = customPos ? customPos.x : dataX;
+                    const displayY = customPos ? customPos.y : dataY;
+
+                    // If custom position exists and is different, add dot and line
+                    if (customPos && (Math.abs(displayX - dataX) > 1 || Math.abs(displayY - dataY) > 1)) {
+                        shapes.push({
+                            type: "line",
+                            x0: dataX,
+                            x1: displayX,
+                            y0: dataY,
+                            y1: displayY,
+                            line: {
+                                color: "#007bff",
+                                width: 1.5,
+                                dash: "dot"
+                            },
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+
+                        shapes.push({
+                            type: "circle",
+                            x0: dataX - 1.5,
+                            x1: dataX + 1.5,
+                            y0: dataY - 1.5,
+                            y1: dataY + 1.5,
+                            fillcolor: "#007bff",
+                            line: {color: "#007bff", width: 2},
+                            xref: "x",
+                            yref: "y",
+                            layer: "below"
+                        });
+                    }
+
                     annotations.push({
-                        x: brand.scores[xAttrId] || 50,
-                        y: brand.scores[yAttrId] || 50,
+                        x: displayX,
+                        y: displayY,
                         text: brand.name,
                         showarrow: false,
                         xanchor: "center",
@@ -1265,7 +1346,7 @@
             // Remove old permanent labels if they exist
             document.querySelectorAll('.brand-label-permanent').forEach(el => el.remove());
 
-            // In edit mode, create permanent visible labels for all brands
+            // In edit mode, create permanent visible labels for brands WITH logos (text-only brands already have annotations)
             if (editMode) {
                 data.brands
                     .filter(brand => brand.logo && brand.scores)
@@ -1353,9 +1434,9 @@
                 const dataX = xaxis.p2d(px);
                 const dataY = yaxis.p2d(py);
 
-                // Find brand near cursor (check display position)
+                // Find brand near cursor (check display position) - only show hover for brands WITH logos
                 const hoveredBrand = data.brands.find(b => {
-                    if (!b.scores || !b.logo) return false;
+                    if (!b.scores || !b.logo) return false; // Only hover labels for logo brands
                     const customPos = b.customPosition && b.customPosition[`${xAttrId}_${yAttrId}`];
                     const displayX = customPos ? customPos.x : (b.scores[xAttrId] || 50);
                     const displayY = customPos ? customPos.y : (b.scores[yAttrId] || 50);
